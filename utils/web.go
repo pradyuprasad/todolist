@@ -33,7 +33,7 @@ func LoginPOST(w http.ResponseWriter, r *http.Request) {
 }
 
 func LoginGET(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "static/login.html")
+	http.ServeFile(w, r, "static/createuser.html")
 }
 
 func Home(w http.ResponseWriter, r *http.Request) {
