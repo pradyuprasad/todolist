@@ -28,11 +28,12 @@ func LoginPOST(w http.ResponseWriter, r *http.Request) {
         `
 		w.Header().Set("Content-Type", "text/html")
 		fmt.Fprint(w, invalidUsernameJS)
+		// reload the login page again
 		http.ServeFile(w, r, "static/login.html")
 		return
 
 	}
-
+	// search for password
 	results, err := db.Query("select password from users where username = ?", username)
 
 	if err != nil {
@@ -45,6 +46,7 @@ func LoginPOST(w http.ResponseWriter, r *http.Request) {
 	var password = r.FormValue("password")
 	fmt.Println(username, password)
 
+	//logic is basically that if results.Next() exists then it means that results is not zero length. Otherwise it is zero length
 	if results.Next() {
 		fmt.Println("this is being run")
 		var storedPassword string
@@ -125,7 +127,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 }
 
 func Serverrun(router *mux.Router) {
-	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static")))) // forgot how this works need to ask GPT
 
 	err := http.ListenAndServe(":8000", router)
 	if err != nil {
@@ -134,8 +136,11 @@ func Serverrun(router *mux.Router) {
 }
 
 func ValidateLoginUsername(username string) bool {
-	trimmedUsername := strings.TrimSpace(username)
+	// returns true for valid and false for invalid
 
+	// remove spaces using strings library
+	trimmedUsername := strings.TrimSpace(username)
+	// if the cut down string is empty then it is invalid
 	if trimmedUsername == "" {
 		return false
 	}
