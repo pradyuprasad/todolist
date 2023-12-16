@@ -24,7 +24,8 @@ func main() {
 	router.HandleFunc("/", utils.Home).Methods("GET")
 	router.HandleFunc("/createuser", utils.CreateUserGET).Methods("GET")
 	router.HandleFunc("/createuser", utils.CreateUserPOST).Methods("POST")
-	//router.HandleFunc("/login", )
+	router.HandleFunc("/login", utils.LoginGET).Methods("GET")
+	router.HandleFunc("/login", utils.LoginPOST).Methods("POST")
 	utils.Serverrun(router)
 
 }
