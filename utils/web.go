@@ -8,31 +8,32 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func LoginPOST(w http.ResponseWriter, r *http.Request) error {
+func LoginPOST(w http.ResponseWriter, r *http.Request) {
 	db, err := DBopen()
 
 	if err != nil {
 		http.Error(w, "Error opening Database", http.StatusInternalServerError)
-		return err
+		return
 	}
 
 	r.ParseForm()
 	var username = r.FormValue("username")
 	var password = r.FormValue("password")
+	fmt.Println(username, password)
 
 	_, err = db.Exec("INSERT into users (username, password) VALUES (?, ?)", username, password)
 
 	if err != nil {
+		fmt.Println(err)
 		http.Error(w, "Error creating User", http.StatusInternalServerError)
-		return err
+		return
 	}
-	http.Redirect(w, r, "./static/createduser.html", http.StatusFound)
-	return nil
+	http.Redirect(w, r, "static/createduser.html", http.StatusFound)
 
 }
 
 func LoginGET(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "./static/login.html")
+	http.ServeFile(w, r, "static/login.html")
 }
 
 func Home(w http.ResponseWriter, r *http.Request) {
