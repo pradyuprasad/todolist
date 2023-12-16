@@ -28,7 +28,7 @@ func LoginPOST(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error creating User", http.StatusInternalServerError)
 		return
 	}
-	http.Redirect(w, r, "static/createduser.html", http.StatusFound)
+	http.Redirect(w, r, "/static/createduser.html", http.StatusFound)
 
 }
 
@@ -43,15 +43,10 @@ func Home(w http.ResponseWriter, r *http.Request) {
 }
 
 func Serverrun(router *mux.Router) {
-	// always keep these two together v
-	/*fs := http.FileServer(http.Dir("static"))
-	http.Handle("/", fs)*/
-	// always keep these 2 together ^ idk why time to find out
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	err := http.ListenAndServe(":8000", router)
-
 	if err != nil {
 		fmt.Println("Error starting server:", err)
 	}
-
 }
