@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func LoginPOST(w http.ResponseWriter, r *http.Request) {
+func CreateUserPOST(w http.ResponseWriter, r *http.Request) {
 	db, err := DBopen()
 
 	if err != nil {
@@ -32,7 +32,7 @@ func LoginPOST(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func LoginGET(w http.ResponseWriter, r *http.Request) {
+func CreateUserGET(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "static/createuser.html")
 }
 
