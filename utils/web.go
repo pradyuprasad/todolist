@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"strings"
@@ -132,21 +131,6 @@ func Serverrun(router *mux.Router) {
 	if err != nil {
 		fmt.Println("Error starting server:", err)
 	}
-}
-
-func CountRows(rows *sql.Rows) (int, error) {
-	var count = 0
-	for rows.Next() {
-
-		count++
-
-	}
-
-	if err := rows.Err(); err != nil {
-		return 0, err
-	}
-
-	return count, nil
 }
 
 func ValidateLoginUsername(username string) bool {
