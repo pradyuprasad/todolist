@@ -89,7 +89,7 @@ func ShowTables(db *sql.DB) error {
 
 }
 
-func DeleteUser(db *sql.DB) error {
+func DeleteTableUser(db *sql.DB) error {
 
 	var DropUsers = "DROP TABLE IF EXISTS users"
 
