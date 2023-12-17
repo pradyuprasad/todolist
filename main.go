@@ -28,13 +28,11 @@ func main() {
 	router.HandleFunc("/login", utils.LoginGET).Methods("GET")
 	router.HandleFunc("/login", utils.LoginPOST).Methods("POST")
 	router.HandleFunc("/loggedin", utils.LoginPOST).Methods("GET")
-	router.HandleFunc("/newtodo", utils.NewTodoGET).Methods("GET")
+	/////////////router.HandleFunc("/newtodo", utils.NewTodoGET).Methods("GET")
+	router.Use(utils.LoggingMiddleware)
+
+	SubRouter := router.PathPrefix("/sub").Subrouter()
+
+	SubRouter.HandleFunc("/hello", utils.HelloHandler)
 	utils.Serverrun(router)
-
-	authRoutes := router.PathPrefix("/").Subrouter()
-
-	authRoutes.HandleFunc("/newtodo", utils.NewTodoGET).Methods("GET")
-	authRoutes.HandleFunc("/newtodo", utils.NewTodoPOST).Methods("POST")
-	authRoutes.Use(utils.AuthRequired) // for some reason this has to be at the end or else newtodo won't work
-
 }

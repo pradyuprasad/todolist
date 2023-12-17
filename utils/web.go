@@ -28,6 +28,15 @@ func Init() {
 
 }
 
+func LoggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Do stuff here
+		fmt.Println(r.RequestURI)
+		// Call the next handler, which can be another middleware in the chain, or the final handler.
+		next.ServeHTTP(w, r)
+	})
+}
+
 func NewTodoPOST(w http.ResponseWriter, r *http.Request) {
 
 	db, err := DBopen()
@@ -52,15 +61,7 @@ func NewTodoGET(w http.ResponseWriter, r *http.Request) {
 func AuthRequired(next http.Handler) http.Handler {
 	fmt.Println("running the auth function")
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		session, _ := store.Get(r, "user-session")
-		// Check if user is authenticated
-		if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
-			fmt.Println("unable to authenticate") // debug statement
-			http.Error(w, "Forbidden", http.StatusForbidden)
-			return
-		}
-
-		fmt.Println("authentication done") // debug statement
+		fmt.Println("yo mama", r.RequestURI)
 		next.ServeHTTP(w, r)
 	})
 }
@@ -202,6 +203,11 @@ func Home(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintln(w, "Hello, Go!")
 
+}
+
+func HelloHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("lalalalal")
+	fmt.Fprintln(w, "FUCK GO!")
 }
 
 func Serverrun(router *mux.Router) {
