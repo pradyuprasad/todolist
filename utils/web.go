@@ -54,14 +54,21 @@ func NewTodoPOST(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewTodoGET(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("REACHED NEWTODO")
+	fmt.Println("REACHED NEWTODO HAHAHAHAHAHA")
 	http.ServeFile(w, r, "static/protected/newtodo.html")
 }
 
 func AuthRequired(next http.Handler) http.Handler {
-	fmt.Println("running the auth function")
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("yo mama", r.RequestURI)
+		session, _ := store.Get(r, "user-session")
+		// Check if user is authenticated
+		if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
+			fmt.Println("unable to authenticate") // debug statement
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+
+		fmt.Println("authentication done") // debug statement
 		next.ServeHTTP(w, r)
 	})
 }
@@ -109,7 +116,7 @@ func LoginPOST(w http.ResponseWriter, r *http.Request) {
 
 	//logic is basically that if results.Next() exists then it means that results is not zero length. Otherwise it is zero length
 	if results.Next() {
-		//fmt.Println("this is being run") // debug statement
+		fmt.Println("this is being run")
 		var storedPassword string
 		if err := results.Scan(&storedPassword); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -129,9 +136,11 @@ func LoginPOST(w http.ResponseWriter, r *http.Request) {
 			if err := session.Save(r, w); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
+			} else {
+				fmt.Println("User has been authenticated!")
+				LoggedInGET(w, r)
+
 			}
-			fmt.Println("sending user to todo")
-			http.Redirect(w, r, "/newtodo", http.StatusSeeOther)
 
 		} else {
 
