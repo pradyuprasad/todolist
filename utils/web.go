@@ -99,6 +99,7 @@ func LoginPOST(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 			session.Values["authenticated"] = true
+			session.Values["username"] = username
 
 			if err := session.Save(r, w); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
