@@ -7,5 +7,21 @@
 </head>
 <body>
     Create a new todo here
+
+    <form action="/newtodo" method="post">
+        <label for="todo_text">Task name</label>
+        <input type="text" id="todo_text" name="todo_text"></input>
+        <label for="due_date">Due Date</label>
+        <input type="date" id="due_date" name="due_date"></input>
+        <label for="Priority">Priority</label>
+        <select id="Priority" name="Priority">
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+        </select>
+        <label for="category">Category</label>
+        <input type="text" id="category" name="category"></input>
+
+    </form>
 </body>
 </html>
