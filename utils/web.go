@@ -61,6 +61,7 @@ func NewTodoGET(w http.ResponseWriter, r *http.Request) {
 func AuthRequired(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session, _ := store.Get(r, "user-session")
+		fmt.Println(session)
 		// Check if user is authenticated
 		if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
 			fmt.Println("unable to authenticate") // debug statement
@@ -138,7 +139,7 @@ func LoginPOST(w http.ResponseWriter, r *http.Request) {
 				return
 			} else {
 				fmt.Println("User has been authenticated!")
-				LoggedInGET(w, r)
+				http.Redirect(w, r, "/newtodo", http.StatusSeeOther)
 
 			}
 
@@ -212,11 +213,6 @@ func Home(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintln(w, "Hello, Go!")
 
-}
-
-func HelloHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("lalalalal")
-	fmt.Fprintln(w, "FUCK GO!")
 }
 
 func Serverrun(router *mux.Router) {
