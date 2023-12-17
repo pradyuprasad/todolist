@@ -16,17 +16,37 @@ var store *sessions.CookieStore
 
 func Init() {
 
+	// load the env file
+
 	if err := godotenv.Load(); err != nil {
 		fmt.Println("Error loading .env file:", err)
 		return
 	}
 
+	// start
 	store = sessions.NewCookieStore([]byte(os.Getenv("SECRET_KEY")))
 
 }
 
+func NewTodoPOST(w http.ResponseWriter, r *http.Request) {
+
+	db, err := DBopen()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	r.ParseForm()
+
+	fmt.Println("db is", db)
+
+	fmt.Println(r)
+
+}
+
 func NewTodoGET(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "static/newtodo.html")
+	fmt.Println("REACHED NEWTODO HAHAHAHAHAHA")
+	http.ServeFile(w, r, "static/protected/newtodo.html")
 }
 
 func AuthRequired(next http.Handler) http.Handler {
@@ -42,7 +62,7 @@ func AuthRequired(next http.Handler) http.Handler {
 }
 
 func LoggedInGET(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "static/loggedin.html")
+	http.ServeFile(w, r, "static/protected/loggedin.html")
 }
 
 func LoginPOST(w http.ResponseWriter, r *http.Request) {
@@ -106,7 +126,7 @@ func LoginPOST(w http.ResponseWriter, r *http.Request) {
 				return
 			} else {
 				fmt.Println("User has been authenticated!")
-				http.Redirect(w, r, "/static/loggedin.html", http.StatusFound)
+				LoggedInGET(w, r)
 
 			}
 
@@ -139,7 +159,7 @@ func LoginPOST(w http.ResponseWriter, r *http.Request) {
 
 func LoginGET(w http.ResponseWriter, r *http.Request) {
 
-	http.ServeFile(w, r, "static/login.html")
+	http.ServeFile(w, r, "static/public/login.html")
 
 }
 
@@ -163,12 +183,17 @@ func CreateUserPOST(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	http.Redirect(w, r, "/static/createduser.html", http.StatusFound)
+	CreateUserGET(w, r)
+
+}
+
+func CreatedUserGET(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "static/public/createduser.html")
 
 }
 
 func CreateUserGET(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "static/createuser.html")
+	http.ServeFile(w, r, "static/public/createuser.html")
 }
 
 func Home(w http.ResponseWriter, r *http.Request) {
@@ -178,7 +203,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 }
 
 func Serverrun(router *mux.Router) {
-	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static")))) // forgot how this works need to ask GPT
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static/public")))) // forgot how this works need to ask GPT
 
 	err := http.ListenAndServe(":8000", router)
 	if err != nil {

@@ -33,5 +33,6 @@ func main() {
 	authRoutes := router.PathPrefix("/").Subrouter()
 	authRoutes.Use(utils.AuthRequired)
 	authRoutes.HandleFunc("/newtodo", utils.NewTodoGET).Methods("GET")
+	authRoutes.HandleFunc("/newtodo", utils.NewTodoPOST).Methods("POST")
 
 }
