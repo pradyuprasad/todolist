@@ -32,7 +32,6 @@ func main() {
 	router.Use(utils.LoggingMiddleware)
 
 	SubRouter := router.PathPrefix("/sub").Subrouter()
-
 	SubRouter.HandleFunc("/hello", utils.HelloHandler)
 	utils.Serverrun(router)
 }
