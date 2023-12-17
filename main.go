@@ -33,5 +33,5 @@ func main() {
 
 	SubRouter := router.PathPrefix("/sub").Subrouter()
 	SubRouter.HandleFunc("/hello", utils.HelloHandler)
-	utils.Serverrun(router)
+	utils.Serverrun(router) // ALWAYS RUN THIS AS THE LAST THING IN THE FILE OR ELSE EVERYTHING AFTER IT WON'T RUN
 }
