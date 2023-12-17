@@ -3,17 +3,13 @@ package utils
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
-	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
+
 	"github.com/joho/godotenv"
 )
-
-var store *sessions.CookieStore
 
 var current_username string
 
@@ -27,19 +23,9 @@ func Init() {
 	}
 
 	// start
-	store = sessions.NewCookieStore([]byte(os.Getenv("SECRET_KEY")))
 
 	current_username = ""
 
-}
-
-func LoggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Do stuff here
-		fmt.Println(r.RequestURI)
-		// Call the next handler, which can be another middleware in the chain, or the final handler.
-		next.ServeHTTP(w, r)
-	})
 }
 
 func NewTodoPOST(w http.ResponseWriter, r *http.Request) {
@@ -61,40 +47,6 @@ func NewTodoPOST(w http.ResponseWriter, r *http.Request) {
 func NewTodoGET(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("REACHED NEWTODO HAHAHAHAHAHA")
 	http.ServeFile(w, r, "static/protected/newtodo.html")
-}
-
-func AuthRequired(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		session, _ := store.Get(r, "user-session")
-		fmt.Println(session)
-
-		// if its too long since last login you're set to zero
-		if createdAt, ok := session.Values["time_created"].(time.Time); ok {
-			age := time.Since(createdAt)
-
-			if age > 10*time.Minute {
-				session.Values["authenticated"] = false
-				session.Values["username"] = ""
-				fmt.Println("authentication timeout error")
-				http.Error(w, "Too Long since last login", http.StatusForbidden)
-				time.Sleep(15 * time.Second)
-				http.Redirect(w, r, "/login", http.StatusSeeOther)
-				return
-
-			}
-		}
-		// Check if user is authenticated
-		if auth, ok := session.Values["authenticated"].(bool); !ok || !auth || session.Values["username"] == "" {
-			fmt.Println("unable to authenticate") // debug statement
-			http.Error(w, "Forbidden", http.StatusForbidden)
-			time.Sleep(15 * time.Second)
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
-			return
-		}
-
-		fmt.Println("authentication done") // debug statement
-		next.ServeHTTP(w, r)
-	})
 }
 
 func AuthSimple(next http.Handler) http.Handler {
@@ -162,49 +114,38 @@ func LoginPOST(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Stored Password:", storedPassword)
 
 		if storedPassword == password {
-			session, err := store.Get(r, "user-session")
 
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
-			session.Values["authenticated"] = true
-			session.Values["username"] = username
-			session.Values["time_created"] = time.Now()
 
 			current_username = username
 
-			if err := session.Save(r, w); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			} else {
-				http.Redirect(w, r, "/newtodo", http.StatusSeeOther)
+			http.Redirect(w, r, "/newtodo", http.StatusSeeOther)
 
-			}
+		}
 
-		} else {
+	} else {
 
-			invalidPasswordJS := `
+		invalidPasswordJS := `
             <script>
                 alert('Invalid Password');
             </script>
         `
-			w.Header().Set("Content-Type", "text/html")
-			fmt.Fprint(w, invalidPasswordJS)
-			http.ServeFile(w, r, "static/login.html")
+		w.Header().Set("Content-Type", "text/html")
+		fmt.Fprint(w, invalidPasswordJS)
+		http.ServeFile(w, r, "static/login.html")
 
-		}
-	} else {
+	}
 
-		invalidUsernameJS := `
+	invalidUsernameJS := `
             <script>
                 alert('Invalid username');
             </script>
         `
-		w.Header().Set("Content-Type", "text/html")
-		fmt.Fprint(w, invalidUsernameJS)
-		http.ServeFile(w, r, "static/login.html")
-
-	}
+	w.Header().Set("Content-Type", "text/html")
+	fmt.Fprint(w, invalidUsernameJS)
+	http.ServeFile(w, r, "static/login.html")
 
 }
 
@@ -251,8 +192,6 @@ func Home(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintln(w, "Hello, Go!")
 
-	ClearCookie(w, r)
-
 }
 
 func Serverrun(router *mux.Router) {
@@ -280,12 +219,4 @@ func ValidateLoginUsername(username string) bool {
 
 func Get_username() string {
 	return current_username
-}
-
-func ClearCookie(w http.ResponseWriter, r *http.Request) {
-
-	session, _ := store.Get(r, "user-session")
-	session.Values["authenticated"] = false
-	session.Values["username"] = ""
-
 }

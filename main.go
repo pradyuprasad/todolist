@@ -31,6 +31,6 @@ func main() {
 
 	SubRouter := router.PathPrefix("/").Subrouter()
 	SubRouter.HandleFunc("/newtodo", utils.NewTodoGET)
-	SubRouter.Use(utils.AuthRequired)
+	//SubRouter.Use(utils.AuthRequired)
 	utils.Serverrun(router) // ALWAYS RUN THIS AS THE LAST THING IN THE FILE OR ELSE EVERYTHING AFTER IT WON'T RUN
 }
