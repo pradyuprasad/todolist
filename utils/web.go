@@ -69,7 +69,7 @@ func AuthRequired(next http.Handler) http.Handler {
 		fmt.Println(session)
 
 		// if its too long since last login you're set to zero
-		/*if createdAt, ok := session.Values["time_created"].(time.Time); ok {
+		if createdAt, ok := session.Values["time_created"].(time.Time); ok {
 			age := time.Since(createdAt)
 
 			if age > 10*time.Minute {
@@ -82,7 +82,7 @@ func AuthRequired(next http.Handler) http.Handler {
 				return
 
 			}
-		}*/
+		}
 		// Check if user is authenticated
 		if auth, ok := session.Values["authenticated"].(bool); !ok || !auth || session.Values["username"] == "" {
 			fmt.Println("unable to authenticate") // debug statement
@@ -250,6 +250,8 @@ func CreateUserGET(w http.ResponseWriter, r *http.Request) {
 func Home(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintln(w, "Hello, Go!")
+
+	ClearCookie(w, r)
 
 }
 
