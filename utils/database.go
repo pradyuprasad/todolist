@@ -102,3 +102,25 @@ func DeleteTableUser(db *sql.DB) error {
 
 	return nil
 }
+
+func CreateTodos(db *sql.DB) error {
+
+	var CreateTodosQuery = `CREATE TABLE IF NOT EXISTS todos (
+		id INT AUTO_INCREMENT PRIMARY KEY, 
+		username VARCHAR(255), 
+		todo_text TEXT, 
+		due_date DATE, 
+		priority TEXT,
+		Category TEXT
+	
+	);`
+
+	_, err := db.Exec(CreateTodosQuery)
+
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	return nil
+
+}
