@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
@@ -13,6 +14,8 @@ import (
 )
 
 var store *sessions.CookieStore
+
+var current_username string
 
 func Init() {
 
@@ -25,6 +28,8 @@ func Init() {
 
 	// start
 	store = sessions.NewCookieStore([]byte(os.Getenv("SECRET_KEY")))
+
+	current_username = ""
 
 }
 
@@ -62,15 +67,46 @@ func AuthRequired(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session, _ := store.Get(r, "user-session")
 		fmt.Println(session)
+
+		// if its too long since last login you're set to zero
+		/*if createdAt, ok := session.Values["time_created"].(time.Time); ok {
+			age := time.Since(createdAt)
+
+			if age > 10*time.Minute {
+				session.Values["authenticated"] = false
+				session.Values["username"] = ""
+				fmt.Println("authentication timeout error")
+				http.Error(w, "Too Long since last login", http.StatusForbidden)
+				time.Sleep(15 * time.Second)
+				http.Redirect(w, r, "/login", http.StatusSeeOther)
+				return
+
+			}
+		}*/
 		// Check if user is authenticated
-		if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
+		if auth, ok := session.Values["authenticated"].(bool); !ok || !auth || session.Values["username"] == "" {
 			fmt.Println("unable to authenticate") // debug statement
 			http.Error(w, "Forbidden", http.StatusForbidden)
+			time.Sleep(15 * time.Second)
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
 
 		fmt.Println("authentication done") // debug statement
 		next.ServeHTTP(w, r)
+	})
+}
+
+func AuthSimple(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if Get_username() == "" {
+			http.Error(w, "Not logged in!", http.StatusForbidden)
+			return
+		}
+
+		fmt.Println("able to authenticate")
+		next.ServeHTTP(w, r)
+
 	})
 }
 
@@ -133,12 +169,14 @@ func LoginPOST(w http.ResponseWriter, r *http.Request) {
 			}
 			session.Values["authenticated"] = true
 			session.Values["username"] = username
+			session.Values["time_created"] = time.Now()
+
+			current_username = username
 
 			if err := session.Save(r, w); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			} else {
-				fmt.Println("User has been authenticated!")
 				http.Redirect(w, r, "/newtodo", http.StatusSeeOther)
 
 			}
@@ -235,5 +273,17 @@ func ValidateLoginUsername(username string) bool {
 	}
 
 	return true
+
+}
+
+func Get_username() string {
+	return current_username
+}
+
+func ClearCookie(w http.ResponseWriter, r *http.Request) {
+
+	session, _ := store.Get(r, "user-session")
+	session.Values["authenticated"] = false
+	session.Values["username"] = ""
 
 }
