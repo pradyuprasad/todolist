@@ -3,16 +3,52 @@ package utils
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
+	"github.com/joho/godotenv"
 )
+
+var store *sessions.CookieStore
+
+func Init() {
+
+	if err := godotenv.Load(); err != nil {
+		fmt.Println("Error loading .env file:", err)
+		return
+	}
+
+	store = sessions.NewCookieStore([]byte(os.Getenv("SECRET_KEY")))
+
+}
+
+func NewTodoGET(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "static/newtodo.html")
+}
+
+func AuthRequired(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		session, _ := store.Get(r, "session-name")
+		// Check if user is authenticated
+		if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func LoggedInGET(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "static/loggedin.html")
+}
 
 func LoginPOST(w http.ResponseWriter, r *http.Request) {
 	db, err := DBopen()
 	if err != nil {
-		http.Error(w, "Error opening Database", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -37,7 +73,7 @@ func LoginPOST(w http.ResponseWriter, r *http.Request) {
 	results, err := db.Query("select password from users where username = ?", username)
 
 	if err != nil {
-		http.Error(w, "Error with Database", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -51,13 +87,27 @@ func LoginPOST(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("this is being run")
 		var storedPassword string
 		if err := results.Scan(&storedPassword); err != nil {
-			http.Error(w, "Error scanning row", http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		fmt.Println("Stored Password:", storedPassword)
 
 		if storedPassword == password {
-			http.Redirect(w, r, "/static/loggedin.html", http.StatusFound)
+			session, err := store.Get(r, "user-session")
+
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+			session.Values["authenticated"] = true
+
+			if err := session.Save(r, w); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			} else {
+				fmt.Println("User has been authenticated!")
+				http.Redirect(w, r, "/static/loggedin.html", http.StatusFound)
+
+			}
 
 		} else {
 
@@ -96,7 +146,7 @@ func CreateUserPOST(w http.ResponseWriter, r *http.Request) {
 	db, err := DBopen()
 
 	if err != nil {
-		http.Error(w, "Error opening Database", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -109,7 +159,7 @@ func CreateUserPOST(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		fmt.Println(err)
-		http.Error(w, "Error creating User", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	http.Redirect(w, r, "/static/createduser.html", http.StatusFound)

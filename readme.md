@@ -14,6 +14,8 @@ Front end stuff
 Security stuff
 1. hash passwords
 2. username and password validation for create user
+2a. Username validation meaning check if username is not in and create special alert for that
+2b. Password validation: length and characters
 
 final depoloyment
 1. upload to heroku or someplace??
