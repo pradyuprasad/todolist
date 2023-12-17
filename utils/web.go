@@ -2,31 +2,16 @@ package utils
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
-
-	"github.com/joho/godotenv"
+	"github.com/gorilla/sessions"
 )
 
-var current_username string
-
-func Init() {
-
-	// load the env file
-
-	if err := godotenv.Load(); err != nil {
-		fmt.Println("Error loading .env file:", err)
-		return
-	}
-
-	// start
-
-	current_username = ""
-
-}
+var store = sessions.NewCookieStore([]byte("super-secret-password"))
 
 func NewTodoPOST(w http.ResponseWriter, r *http.Request) {
 
@@ -45,21 +30,9 @@ func NewTodoPOST(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewTodoGET(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Reached the 'newtodo' route. Requested URL: %s\n", r.URL.Path)
 	fmt.Println("REACHED NEWTODO HAHAHAHAHAHA")
 	http.ServeFile(w, r, "static/protected/newtodo.html")
-}
-
-func AuthSimple(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if Get_username() == "" {
-			http.Error(w, "Not logged in!", http.StatusForbidden)
-			return
-		}
-
-		fmt.Println("able to authenticate")
-		next.ServeHTTP(w, r)
-
-	})
 }
 
 func LoggedInGET(w http.ResponseWriter, r *http.Request) {
@@ -115,12 +88,23 @@ func LoginPOST(w http.ResponseWriter, r *http.Request) {
 
 		if storedPassword == password {
 
+			session, err := store.Get(r, "user-name")
+
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
 			}
+			// something
+			session.Values["authenticated"] = true
+			session.Values["username"] = username
+			err = session.Save(r, w) // ALWAYS SAVE THE SESSION BEFORE DOING ANYTHING ELSE
+			fmt.Println("the saved session was", session)
+			if err != nil {
 
-			current_username = username
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
 
+			}
 			http.Redirect(w, r, "/newtodo", http.StatusSeeOther)
 
 		}
@@ -146,6 +130,23 @@ func LoginPOST(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	fmt.Fprint(w, invalidUsernameJS)
 	http.ServeFile(w, r, "static/login.html")
+
+}
+
+func LogoutHandle(w http.ResponseWriter, r *http.Request) {
+
+	session, err := store.Get(r, "user-name")
+
+	if err != nil {
+
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	session.Options.MaxAge = -1
+
+	session.Save(r, w)
+	fmt.Fprintln(w, "Logged out")
+	fmt.Println("Logged out")
 
 }
 
@@ -216,7 +217,39 @@ func ValidateLoginUsername(username string) bool {
 	return true
 
 }
+func AuthRequired(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		session, _ := store.Get(r, "user-name")
+		fmt.Println("the session variable is", session)
 
-func Get_username() string {
-	return current_username
+		// Check if user is authenticated
+
+		auth, ok := session.Values["authenticated"].(bool)
+		if !ok {
+
+			fmt.Println("not OK!")
+
+			http.Error(w, "not OK!", http.StatusForbidden)
+
+		} else if !auth {
+
+			fmt.Println("not auth!")
+
+			http.Error(w, "not auth", http.StatusForbidden)
+
+		} else {
+
+			fmt.Println("authentication done") // debug statement
+			next.ServeHTTP(w, r)
+
+		}
+
+		/*if auth, ok := session.Values["authenticated"].(bool); !ok || !auth == "" {
+			fmt.Println("unable to authenticate") // debug statement
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}*/
+
+	})
 }
