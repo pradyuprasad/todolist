@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS todos ( \
     todo_text TEXT, \
     due_date DATE, \
     priority TEXT, \
+    Category TEXT, \
     FOREIGN KEY (username) REFERENCES users(username) \
 );
 

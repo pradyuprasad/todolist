@@ -21,11 +21,35 @@ func NewTodoPOST(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	defer db.Close()
+
 	r.ParseForm()
 
-	fmt.Println("db is", db)
+	session, err := store.Get(r, "user-name")
 
-	fmt.Println(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var username = session.Values["username"]
+
+	var todo_text = r.FormValue("todo_text")
+	var due_date = r.FormValue("due_date")
+	var priority = r.FormValue("Priority")
+	var category = r.FormValue("category")
+
+	_, err = db.Exec("INSERT into todos (username, todo_text, due_date, priority, Category) VALUES (?, ?, ?, ?, ?)",
+		username, todo_text, due_date, priority, category)
+
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintln(w, "Inserted!")
+	fmt.Println("Inserted into DB")
 
 }
 
@@ -243,13 +267,6 @@ func AuthRequired(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 
 		}
-
-		/*if auth, ok := session.Values["authenticated"].(bool); !ok || !auth == "" {
-			fmt.Println("unable to authenticate") // debug statement
-			http.Error(w, "Forbidden", http.StatusForbidden)
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
-			return
-		}*/
 
 	})
 }
