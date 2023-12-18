@@ -23,8 +23,6 @@ func main() {
 	router.HandleFunc("/", utils.Home).Methods("GET")
 	router.HandleFunc("/createuser", utils.CreateUserGET).Methods("GET")
 	router.HandleFunc("/createuser", utils.CreateUserPOST).Methods("POST")
-	router.HandleFunc("/login", utils.LoginGET).Methods("GET")
-	router.HandleFunc("/login", utils.LoginPOST).Methods("POST")
 	router.HandleFunc("/loggedin", utils.LoginPOST).Methods("GET")
 	router.HandleFunc("/logout", utils.LogoutHandle).Methods("GET")
 
@@ -33,5 +31,9 @@ func main() {
 	SubRouter.HandleFunc("/newtodo", utils.NewTodoGET).Methods("GET")
 	SubRouter.HandleFunc("/newtodo", utils.NewTodoPOST).Methods("POST")
 
+	LoginRouter := router.PathPrefix("/").Subrouter()
+	LoginRouter.Use(utils.NotLoggedin)
+	LoginRouter.HandleFunc("/login", utils.LoginGET).Methods("GET")
+	LoginRouter.HandleFunc("/login", utils.LoginPOST).Methods("POST")
 	utils.Serverrun(router) // ALWAYS RUN THIS AS THE LAST THING IN THE FILE OR ELSE EVERYTHING AFTER IT WON'T RUN
 }

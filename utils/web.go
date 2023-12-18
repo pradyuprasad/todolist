@@ -270,3 +270,42 @@ func AuthRequired(next http.Handler) http.Handler {
 
 	})
 }
+
+func NotLoggedin(next http.Handler) http.Handler {
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		session, _ := store.Get(r, "user-name")
+		fmt.Println("the session variable is", session)
+
+		// Check if user is authenticated
+
+		auth, ok := session.Values["authenticated"].(bool)
+		if ok {
+
+			fmt.Println("not OK!")
+
+			invalidUsernameJS := `
+            <script>
+                alert('You have already logged in');
+            </script>
+        `
+			w.Header().Set("Content-Type", "text/html")
+			fmt.Fprint(w, invalidUsernameJS)
+			// reload the login page again
+			http.ServeFile(w, r, "static/protected/newtodo.html")
+		} else if auth {
+
+			fmt.Println("not auth!")
+
+			http.Error(w, "not auth", http.StatusForbidden)
+
+		} else {
+
+			fmt.Println("authentication done") // debug statement
+			next.ServeHTTP(w, r)
+
+		}
+
+	})
+
+}
