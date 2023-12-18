@@ -4,9 +4,9 @@ Roadmap to be done
 
 Backend stuff
 1. ~~allow user to create todos if they have logged in~~ /
-new thing: ensure user can't login twice
-2. view todos
-3. delete todos
+~~new thing: ensure user can't login twice~~
+2. ~~view todos~~
+3. ~~delete todos~~
 
 Front end stuff
 1. use React (for the first time yay!)
