@@ -30,6 +30,11 @@ func main() {
 	SubRouter.Use(utils.AuthRequired)
 	SubRouter.HandleFunc("/newtodo", utils.NewTodoGET).Methods("GET")
 	SubRouter.HandleFunc("/newtodo", utils.NewTodoPOST).Methods("POST")
+	SubRouter.HandleFunc("/mytodos", utils.MyTodosGET).Methods("GET")
+	SubRouter.HandleFunc("/test", utils.TestGET).Methods("GET")
+	SubRouter.HandleFunc("/test-api", utils.TestAPI).Methods("GET")
+	SubRouter.HandleFunc("/get_todos", utils.GetTodosAPI).Methods("GET")
+	SubRouter.HandleFunc("/delete_todo/{todoID}", utils.DeleteTODOS).Methods("DELETE")
 
 	LoginRouter := router.PathPrefix("/").Subrouter()
 	LoginRouter.Use(utils.NotLoggedin)

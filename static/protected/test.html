@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Testing API page</title>
+</head>
+<body>
+
+    <div class="testing" id ="testing123"></div>
+
+    <script>
+        function fetchData() {
+                    fetch('/test-api')
+                        .then(response => response.json())
+                        .then(data => {
+                            document.getElementById('testing123').innerText = data.message;
+                        })
+                        .catch(error => console.error('Error:', error));
+                }
+
+                // Call fetchData when the page loads
+                window.onload = fetchData;
+    </script>
+    
+</body>
+</html>

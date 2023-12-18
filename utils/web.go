@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,6 +13,141 @@ import (
 )
 
 var store = sessions.NewCookieStore([]byte("super-secret-password"))
+
+func DeleteTODOS(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+	TodoId := vars["todoID"]
+
+	session, err := store.Get(r, "user-name")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	db, err := DBopen()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	defer db.Close()
+
+	var username = session.Values["username"]
+
+	results, err := db.Exec("DELETE FROM todos where username = ? and id = ?", username, TodoId)
+
+	if err != nil {
+
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	rowsAffected, err := results.RowsAffected()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if rowsAffected == 0 {
+		http.Error(w, "Todo not found or user not authorized to delete this todo.", http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Todo deleted successfully"))
+
+}
+
+func GetTodosAPI(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Println("\nWe are getting todos")
+
+	session, err := store.Get(r, "user-name")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var username = session.Values["username"]
+
+	fmt.Println(username)
+
+	db, err := DBopen()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	defer db.Close()
+
+	results, err := db.Query("SELECT id, todo_text, due_date, priority, Category FROM todos WHERE username = ?", username)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer results.Close()
+
+	// Define a struct to hold a single todo item
+	type Todo struct {
+		ID       int
+		TodoText string
+		DueDate  string // Assuming date is returned as a string, adjust if needed
+		Priority string
+		Category string
+	}
+
+	var todos []Todo
+	todoExists := false
+	for results.Next() {
+		todoExists = true
+		var todo Todo
+		err = results.Scan(&todo.ID, &todo.TodoText, &todo.DueDate, &todo.Priority, &todo.Category)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		//fmt.Print(todo)
+		todos = append(todos, todo)
+
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	if !todoExists {
+		json.NewEncoder(w).Encode(map[string]string{"message": "nothing found"})
+		return
+	}
+
+	fmt.Print(todos)
+
+	json.NewEncoder(w).Encode(todos)
+
+}
+
+func TestAPI(w http.ResponseWriter, r *http.Request) {
+	// Create a simple test data structure
+	testData := struct {
+		Message string `json:"message"`
+	}{
+		Message: "Hello from the API!",
+	}
+
+	// Set content type as JSON
+	w.Header().Set("Content-Type", "application/json")
+
+	// Encode and send the test data as JSON
+	json.NewEncoder(w).Encode(testData)
+}
+
+func TestGET(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "static/protected/test.html")
+}
+
+func MyTodosGET(w http.ResponseWriter, r *http.Request) {
+
+	http.ServeFile(w, r, "static/protected/mytodos.html")
+}
 
 func NewTodoPOST(w http.ResponseWriter, r *http.Request) {
 
@@ -69,6 +205,8 @@ func LoginPOST(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	defer db.Close()
 
 	r.ParseForm()
 	var username = r.FormValue("username")
@@ -187,6 +325,8 @@ func CreateUserPOST(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	defer db.Close()
 
 	r.ParseForm()
 	var username = r.FormValue("username")

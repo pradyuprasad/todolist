@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello World!</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+    <body>
+        <h1>My Todos</h1>
+        <table id="todos_table">
+            <thead>
+                <th>ID</th>
+                <th>Todo Text</th>
+                <th>Due Date</th>
+                <th>Priority</th>
+                <th>Category</th>
+            </thead>
+            <tbody>
+                <!-- Todo items will be inserted here -->
+            </tbody>
+        </table>
+        <script>
+            function fetchTodos() {
+                fetch('/get_todos') 
+                    .then(response => response.json())
+                    .then(data => {
+                        const tableBody = document.getElementById('todos_table').getElementsByTagName('tbody')[0];
+                        
+                        // Check if the response contains a message indicating no todos found
+                        if (data.message) {
+                            let row = tableBody.insertRow();
+                            let cell = row.insertCell(0);
+                            cell.colSpan = 5; // Span across all columns
+                            cell.innerHTML = data.message;
+                            console.log(data.message)
+                            cell.style.textAlign = 'center';
+                        } else {
+                            // Iterate over each todo and insert it into the table
+                            //console.log(data)
+                            data.forEach(todo => {
+                                console.log(todo)
+                                let row = tableBody.insertRow();
+                                row.insertCell(0).innerHTML = todo.ID;
+                                row.insertCell(1).innerHTML = todo.TodoText;
+                                row.insertCell(2).innerHTML = todo.DueDate;
+                                row.insertCell(3).innerHTML = todo.Priority;
+                                row.insertCell(4).innerHTML = todo.Category;
+                                row.insertCell(5).innerHTML = `<button type="button" onclick="deleteTodo(${todo.ID})"> Delete </button>`
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        const tableBody = document.getElementById('todos_table').getElementsByTagName('tbody')[0];
+                        let row = tableBody.insertRow();
+                        let cell = row.insertCell(0);
+                        cell.colSpan = 5;
+                        cell.innerHTML = 'Error loading todos';
+                        cell.style.textAlign = 'center';
+                    });
+            }
+        
+            window.onload = fetchTodos;
+            function deleteTodo(todoID) {
+                fetch(`/delete_todo/${todoID}`, { method: 'DELETE' })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok.');
+                    }
+                    // You can add additional code here to handle the response if needed
+                    console.log('Todo deleted successfully');
+                    // Reload the list of todos or remove the item from the DOM
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+
+                location.reload();
+
+}
+        </script>
+        
+    </body>
+</html>
